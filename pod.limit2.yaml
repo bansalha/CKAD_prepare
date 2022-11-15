@@ -11,8 +11,8 @@ spec:
     name: mypod
     resources:
       requests:
-        memory: "200"
-        cpu: "400m"
+        memory: "450m"
+        cpu: "1"
   dnsPolicy: ClusterFirst
   restartPolicy: Never
 status: {}
