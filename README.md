@@ -65,6 +65,30 @@ kubectl create service clusterip myapp --tcp=80:80
 create deployment
 kubectl create deployment myapp --image=nginx --port=80
 
+kubectl create deployment my-deploy --image=nginx --replicas=3 --dry-run=client -o yaml> deploy.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ 	labels:
+ 		app: my-deploy
+ 	name: my-deploy
+spec:
+ 	replicas: 3
+ 	selector:
+ 		matchLabels:
+ 			app: my-deploy
+ 	template:
+ 		metadata:
+ 			labels:
+ 				app: my-deploy
+ 		spec:
+ 			containers:
+ 			- image: nginx
+ 			  name: nginx
+
+ 			  
+
 pod creation and running a command
 kubectl run tmp --image=busybox --restart=Never -it --rm -- wget -O- 10.109.232.76:80	
 
@@ -377,7 +401,7 @@ $ kubectl get pods -l 'tier in (frontend,backend),env=dev' --show-labels
 NAME ... LABELS
 pod2 ... app=crawler,env=dev,tier=frontend
 
-Selecting Resources in YAML
+# Selecting Resources in YAML
 Equality-based
 apiVersion: v1
 kind: Service
@@ -405,7 +429,32 @@ spec:
  				values: [frontend,backend]}
 
 
- 				
+# Purpose of Annotations		
+Descriptive metadata without the ability to be queryable
+
+apiVersion: v1
+kind: Pod
+metadata:
+	name: my-pod
+ 	annotations:
+ 		commit: 866a8dc
+ 		author: 'Benjamin Muschko'
+ 	branch: 'bm/bugfix'
+spec:
+....
+
+$ kubectl annotate pod nginx 
+commit='866a8dc' author='Benjamin Muschko' branch='bm/bugfix'
+$ kubectl describe pods my-pod
+Name: my-pod
+Namespace: default
+...
+Annotations: author: Benjamin Muschko
+ branch: bm/bugfix
+ commit: 866a8dc
+...
+
+
 
 Can you foresee potential issues with a rolling deployment?
 
