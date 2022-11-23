@@ -67,7 +67,7 @@ create deployment
 
 kubectl create deployment my-deploy --image=nginx --replicas=3 --dry-run=client -o yaml> deploy.yaml
 
-apiVersion: apps/v1
+`apiVersion: apps/v1
 kind: Deployment
 metadata:
  	labels:
@@ -86,7 +86,7 @@ spec:
  			containers:
  			- image: nginx
  			  name: nginx
-
+`
 
 
 pod creation and running a command
