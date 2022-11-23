@@ -34,29 +34,10 @@ Show 3 lines around a text `kubectl get pods -o yaml | grep -C 3 'annotations'`
 
 to remove all labels `kubectl label pod backend env-`
 
+# Deployment
+create deployment `kubectl create deployment myapp --image=nginx --port=80`
 
-change image
-kubectl set image deployment/deploy nginx=nginx:latest
-
-to view history of rollout
-kubectl rollout history deploy
-
-changes in that rollout
-kubectl rollout history deploy --revision=5
-
-rollback to older version
-kubectl rollout undo deployment/deploy --to-revision=4
-
-cronjob creation 
-kubectl create cronjob current-date --schedule="* * * * *" --image=nginx -- /bin/sh -c 'echo "Current date: $(date)"'
-
-create service with cluster ip
-kubectl create service clusterip myapp --tcp=80:80
-
-create deployment
-`kubectl create deployment myapp --image=nginx --port=80`
-
-kubectl create deployment my-deploy --image=nginx --replicas=3 --dry-run=client -o yaml> deploy.yaml
+`kubectl create deployment my-deploy --image=nginx --replicas=3 --dry-run=client -o yaml> deploy.yaml`
 
 ``` yaml
 apiVersion: apps/v1
@@ -79,6 +60,23 @@ spec:
  		- image: nginx
  		  name: nginx
 ```
+
+change image `kubectl set image deployment/deploy nginx=nginx:latest`
+
+
+# Update 
+to view history of rollout  `kubectl rollout history deploy`
+ 
+changes in that rollout `kubectl rollout history deploy --revision=5`
+
+rollback to older version `kubectl rollout undo deployment/deploy --to-revision=4`
+
+
+# Cronjob
+cronjob creation `kubectl create cronjob current-date --schedule="* * * * *" --image=nginx -- /bin/sh -c 'echo "Current date: $(date)"'`
+
+# Service 
+create service with cluster ip `kubectl create service clusterip myapp --tcp=80:80`
 
 
 pod creation and running a command
