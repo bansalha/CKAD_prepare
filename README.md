@@ -63,7 +63,7 @@ create service with cluster ip
 kubectl create service clusterip myapp --tcp=80:80
 
 create deployment
-kubectl create deployment myapp --image=nginx --port=80
+`kubectl create deployment myapp --image=nginx --port=80`
 
 kubectl create deployment my-deploy --image=nginx --replicas=3 --dry-run=client -o yaml> deploy.yaml
 
@@ -87,7 +87,7 @@ spec:
  			- image: nginx
  			  name: nginx
 
- 			  
+
 
 pod creation and running a command
 kubectl run tmp --image=busybox --restart=Never -it --rm -- wget -O- 10.109.232.76:80	
