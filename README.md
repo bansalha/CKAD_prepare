@@ -4,19 +4,13 @@ To prepare, you can try below githib/links
 https://github.com/bmuschko/ckad-prep
 
 
-kubectl run mypod --image=nginx:2.3.5 --restart=Never --port=80 --namespace=ckad-prep
+Command to create resources `kubectl create --help`
 
-Command to create resources
-kubectl create --help
+Get fields `kubectl explain pods.spec`
 
-Get fields
-kubectl explain pods.spec
+use the alias `alias k=kubectl`
 
-use the alias
-alias k=kubectl
-
-Setting context & Namespace
-kubectl config set-context --current --namespace=app-spac
+Setting context & Namespace `kubectl config set-context --current --namespace=app-spac`
 
 ShortCut
 instead of namepaces use ns
