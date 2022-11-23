@@ -71,22 +71,22 @@ kubectl create deployment my-deploy --image=nginx --replicas=3 --dry-run=client 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- 	labels:
- 		app: my-deploy
- 	name: my-deploy
+  labels:
+    app: my-deploy
+   name: my-deploy
 spec:
- 	replicas: 3
- 	selector:
- 		matchLabels:
- 			app: my-deploy
+   replicas: 3
+   selector:
+     matchLabels:
+ 		app: my-deploy
  	template:
- 		metadata:
- 			labels:
- 				app: my-deploy
- 		spec:
- 			containers:
- 			- image: nginx
- 			  name: nginx
+ 	  metadata:
+ 		labels:
+ 	      app: my-deploy
+ 	  spec:
+ 		containers:
+ 		- image: nginx
+ 		  name: nginx
 ```
 
 
