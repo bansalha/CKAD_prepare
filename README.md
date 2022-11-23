@@ -13,30 +13,27 @@ use the alias `alias k=kubectl`
 Setting context & Namespace `kubectl config set-context --current --namespace=app-spac`
 
 ShortCut
-instead of namepaces use ns
-kubectl get ns
-instead of using pods use po
-kubectl get po
-instead of deployment use deploy
-kubectl get deploy
+instead of namepaces use ns `kubectl get ns`
+instead of using pods use po `kubectl get po`
+instead of deployment use deploy `kubectl get deploy`
 similarily
 persistentvolumeclaim=pvc
 persistentvolume=pv
 
-Delete any K8s object
-kubectl delete pod nginx --grace-period=0 --force
+Delete any K8s object `kubectl delete pod nginx --grace-period=0 --force`
 
-kubectl taint nodes production-node app=red:NoSchedule
-to schedule the pod on specific node called production node
+to schedule the pod on specific node called production node `kubectl taint nodes production-node app=red:NoSchedule`
 
-kubectl get pods --show-labels
+# Labels
 
-kubectl get po -l 'team in (shiny, legacy)',env=prod --show-label
+Show Labels `kubectl get pods --show-labels`
 
-kubectl get pods -o yaml | grep -C 3 'annotations'
+Show Label by values `kubectl get po -l 'team in (shiny, legacy)',env=prod --show-label`
 
-kubectl label pod backend env-
-to remove all labels
+Show 3 lines around a text `kubectl get pods -o yaml | grep -C 3 'annotations'`
+
+to remove all labels `kubectl label pod backend env-`
+
 
 change image
 kubectl set image deployment/deploy nginx=nginx:latest
