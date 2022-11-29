@@ -155,6 +155,33 @@ change image `kubectl set image deployment/deploy nginx=nginx:latest`
 
 create deployment exposing nodeport on port=8080 `kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080`
 
+
+Check current deployment replicas
+`kubectl get deployments my-deploy`
+NAME READY UP-TO-DATE AVAILABLE AGE
+my-deploy 2 2 2 9h
+
+Scaling from 2 to 4 replicas
+`kubectl scale deployment my-deploy --replicas=4`
+deployment.extensions/my-deploy scaled
+
+Check the changed deployment replicas
+`kubectl get deployment my-deploy`
+NAME READY UP-TO-DATE AVAILABLE AGE
+my-deploy 4 4 4 9h
+
+# Create Horizontal Pod Autoscaler
+ Maintain average CPU utilization across all Pods of 70%
+`kubectl autoscale deployments my-deploy --cpu-percent=70  --min=1 --max=10`
+horizontalpodautoscaler.autoscaling/my-deploy autoscaled
+
+Check the current status of autoscaler
+`kubectl get hpa my-deploy`
+NAME REFERENCE TARGETS MINPODS MAXPODS REPLICAS AGE
+my-deploy Deployment/my-deploy 0%/70% 1 10 4 23s
+
+
+
 # Pod
 pod creation and running a command `kubectl run tmp --image=busybox --restart=Never -it --rm -- wget -O- 10.109.232.76:80`
 
@@ -191,6 +218,66 @@ spec:
  		- echo "started app"
 ```
 
+# Job
+Increment a counter and render its value on the terminal
+`kubectl create job counter --image=nginx -- /bin/sh -c 'counter=0; while [ $counter -lt 3 ]; do  counter=$((counter+1)); echo "$counter"; sleep 3; done;'`
+job.batch/counter created
+
+Creating a Job (declarative)
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+ 	name: counter
+spec:
+ 	completions: 1
+ 	parallelism: 1
+ 	backoffLimit: 6
+ 	template:
+ 		spec:
+ 			restartPolicy: OnFailure
+ 			containers:
+ 			- args:
+ 				- /bin/sh
+ 				- -c
+ 				- ...
+ 		image: nginx
+ 		name: counter
+```
+
+ List all jobs
+`kubectl get jobs`
+NAME DESIRED SUCCESSFUL AGE
+counter 1 1 3m
+
+Identify correlating Pods
+`kubectl get pods`
+NAME READY STATUS RESTARTS AGE
+counter-924lc 0/1 Completed 0 22m
+
+Get the logs of the Pod
+`kubectl logs counter-924lc`
+1
+2
+3
+
+spec.template.spec.restartPolicy: OnFailure
+Same pod will be restarted again
+
+spec.template.spec.restartPolicy: Never
+New pod will restart
+
+
+
+spec.completions: x
+spec.parallelism: y
+
+Type Completion criteria
+Non-parallel --Complete as soon as its Pod terminates successfully
+Parallel with fixed completion count -- Complete when specified number of tasks finish successfully
+Parallel with a work queue -- Once at least one Pod has terminated with success and all Pods are terminated
+
+
 # Logs Access
 Accessing Logs `kubcetl logs busybox`
 Dump logs of container 1 `kubectl logs busybox --container=c1`
@@ -207,9 +294,46 @@ rollback to older version `kubectl rollout undo deployment/deploy --to-revision=
 # Cronjob
 cronjob creation `kubectl create cronjob current-date --schedule="* * * * *" --image=nginx -- /bin/sh -c 'echo "Current date: $(date)"'`
 
+```yaml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+ 	name: counter
+spec:
+ 	schedule: "*/1 * * * *"
+ 		jobTemplate:
+ 			spec:
+ 				template:
+ 					spec:
+ 						restartPolicy: Never
+ 						containers:
+ 						- args:
+ 							- /bin/sh
+ 							- -c
+ 							- ...
+ 							image: nginx
+ 							name: counter
+``` 							
+
 # Service 
 create service with cluster ip `kubectl create service clusterip myapp --tcp=80:80`
 
+create a pod ad expose with a service `kubectl run nginx --image=nginx --port=80 --expose`
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+ 	name: nginx
+spec:
+ 	selector:
+ 		tier: frontend --- This is how service maps pod to redirect request
+ 	ports:
+ 		- port: 3000
+ 			protocol: TCP
+ 			targetPort: 80
+ 	type: ClusterIP
+```
 # Network
 view network policy `kubectl get networkpolicy`
 
@@ -501,3 +625,5 @@ pod-template-hash=1365642048
  		Mounts: <none>
  		Volumes: <none>
 ```
+
+
