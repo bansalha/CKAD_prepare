@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: busybox1
+  name: busybox1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: busybox1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: busybox1
+    spec:
+      containers:
+      - image: busybox
+        name: busybox
+        resources: {}
+        command:
+        - /bin/sh
+        - -c
+        - "echo version-2 > /work-dir/index.html"
+status: {}

@@ -2,7 +2,10 @@
 
 To prepare, you can try below githib/links
 https://github.com/bmuschko/ckad-prep
-
+https://github.com/aireddy73/Kubernetes/tree/main/CKAD%20Exercies
+https://github.com/bmuschko/CKAD-exercises
+https://github.com/dguyhasnoname/CKAD-TheHardWay
+https://github.com/dgkanatsios/CKAD-exercises
 
 Command to create resources `kubectl create --help`
 
@@ -24,6 +27,52 @@ Delete any K8s object `kubectl delete pod nginx --grace-period=0 --force`
 
 to schedule the pod on specific node called production node `kubectl taint nodes production-node app=red:NoSchedule`
 
+Frequently used commands
+set default namespace `kubectl config set-context --current --namespace=ckad-prep`
+Rolling update `kubectl set image deployment/backend www=nginx:1.1.2`
+Checking history of deployment `kubectl rollout history deployment/frontend`
+rollback to previous version `kubectl rollout undo deployment/backend`
+rollback to specific version `kubectl rollout undo deployment/backend --to-revision=2`
+watch status `kubectl rollout status deployment/backend`
+Copy /tmp/foo_dir local directory to /tmp/bar_dir in a remote pod in the current namespace `kubectl cp /tmp/foo_dir my-pod:/tmp/bar_dir`
+Copy /tmp/foo local file to /tmp/bar in a remote pod in a specific container `kubectl cp /tmp/foo my-pod:/tmp/bar -c my-container`
+Copy /tmp/foo local file to /tmp/bar in a remote pod in namespace my-namespace `kubectl cp /tmp/foo my-namespace/my-pod:/tmp/bar`
+Copy /tmp/foo from a remote pod to /tmp/bar locally `kubectl cp my-namespace/my-pod:/tmp/foo /tmp/bar`
+
+listen on local port 5000 and forward to port 5000 on Service backend `kubectl port-forward svc/my-service 5000`
+listen on local port 5000 and forward to Service target port with name my-service-port `kubectl port-forward svc/my-service 5000:my-service-port`
+listen on local port 5000 and forward to port 6000 on a Pod created by my-deployment`kubectl port-forward deploy/my-deployment 5000:6000`
+run command in first Pod and first container in Deployment (single- or multi-container cases) `kubectl exec deploy/my-deployment -- ls`
+
+kubectl cordon my-node                                                Mark my-node as unschedulable
+kubectl drain my-node                                                 Drain my-node in preparation for maintenance
+kubectl uncordon my-node                                              Mark my-node as schedulable
+kubectl top node my-node                                              Show metrics for a given node
+kubectl cluster-info                                                  Display addresses of the master and services
+kubectl cluster-info dump                                             Dump current cluster state to stdout
+kubectl cluster-info dump --output-directory=/path/to/cluster-state   Dump current cluster state to /path/to/cluster-state
+
+kubectl api-resources --namespaced=true       All namespaced resources
+kubectl api-resources --namespaced=false      All non-namespaced resources
+kubectl api-resources -o name                 All resources with simple output (only the resource name)
+kubectl api-resources -o wide                 All resources with expanded (aka "wide") output
+kubectl api-resources --verbs=list,get        All resources that support the "list" and "get" request verbs
+kubectl api-resources --api-group=extensions  All resources in the "extensions" API group
+
+Run a command "env" `kubectl run nginx --image=nginx -- env`
+
+create resource quota `kubectl create quota myrq --hard=cpu=1,memory=1G,pods=2 --dry-run=client -o yaml`
+
+setting a pod image `kubectl set image pod/nginx nginx=nginx:1.7.1`
+
+getting image version ` kubectl get po nginx -o jsonpath='{.spec.containers[].image}'`
+
+run a wget in image `k run busybox123 --image=busybox -- wget -O- 10.42.0.171:80`
+
+get ip of the pod `k get po myapp-6ffd94cbc8-88vpm -o jsonpath='{.status.podIP}'`
+
+set environment variable `kubectl run nginx --image=nginx --restart=Never --env=var1=val1`
+
 # Labels
 
 Show Labels `kubectl get pods --show-labels`
@@ -33,6 +82,49 @@ Show Label by values `kubectl get po -l 'team in (shiny, legacy)',env=prod --sho
 Show 3 lines around a text `kubectl get pods -o yaml | grep -C 3 'annotations'`
 
 to remove all labels `kubectl label pod backend env-`
+
+change a label `kubectl label po nginx2 app=v2 --overwrite`
+
+Add a new label to pod having app=v1 or v2 `kubectl label pod -l 'app in (v1,v2) tier=web`
+
+remove label from pod having app as label `kubectl label po -l app app-`
+
+Run a pod specifically on a node
+`kubectl label nodes node1 accelerator=nvidia-tesla-p100`
+Use Nodeselector property to set node affinity
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: accelerator
+            operator: In
+            values:
+            - nvidia-tesla-p100            
+  containers:
+  - name: nginx
+    image: nginx
+    imagePullPolicy: IfNotPresent
+```
+
+Annotate pod nginx1 with description='my description'
+`kubectl annotate po/nginx description='my description'`
+
+Annotate pod nginx1, nginx2 and nginx3 with description='my description'
+`kubectl annotate po/nginx{1..3} desciption='my description'`
+
+check annotation
+`kubectl annotate po/nginx1 --list`
+
+Remove an annotation
+`kubectl annotate po/nginx{1..3} description-`
+
 
 
 Assigning Labels
@@ -179,6 +271,12 @@ Check the current status of autoscaler
 `kubectl get hpa my-deploy`
 NAME REFERENCE TARGETS MINPODS MAXPODS REPLICAS AGE
 my-deploy Deployment/my-deploy 0%/70% 1 10 4 23s
+
+pause deployment
+`kubcel rollout pause deploy nginx`
+
+resume deployment
+`kubectl rollout resume deploy/nginx`
 
 
 
@@ -334,8 +432,84 @@ spec:
  			targetPort: 80
  	type: ClusterIP
 ```
+
+Only reachable from within the cluster
+`kubectl get service nginx`
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
+nginx ClusterIP 10.105.201.83 <none> 80/TCP 3h
+
+Accessible from outside of the cluster
+`kubectl get service nginx`
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
+nginx NodePort 10.105.201.83 <none> 80:30184/TCP 3h
+
+
 # Network
 view network policy `kubectl get networkpolicy`
+
+
+```
+yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+ 	name: my-network-policy
+spec:
+ 	podSelector:
+ 		matchLabels:
+ 			tier: frontend ---label selection for pods
+ 	policyTypes:
+ 	- Ingress   -- inbound and outbound traffic
+ 	- Egress
+ 	ingress:
+ 	- from:     -- who can connect to pod?     
+ 		...
+ 	egress:
+ 	- to:      
+ ...          -- where can pod connect to?
+
+```
+
+Denying all access and allowing access as needed
+```
+yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+ 	name: default-deny
+spec:
+ 	podSelector: {}  --applies to all pods
+ 	policyTypes:
+ 	- Ingress -- inbound and outbound blocked
+ 	- Egress
+```
+
+Allow traffic from pod with label
+```
+yaml
+...
+ingress:
+	- from:
+ 		- podSelector:
+ 				matchLabels:
+ 					tier: backend -- allow inbound traffic from pod having label=backend
+...
+
+```
+
+Restrict access to ports
+```yaml
+...
+ingress:
+	- from:
+ 		- podSelector:
+ 				matchLabels:
+ 					tier: backend
+ 		ports:
+ 			- protocol: TCP   -- allow access from 5432 port
+ 				port: 5432
+...
+```
 
 # Commands
 
@@ -625,5 +799,99 @@ pod-template-hash=1365642048
  		Mounts: <none>
  		Volumes: <none>
 ```
+
+# Volumes
+
+emptyDir -- Empty directory in Pod. Only persisted for the lifespan of a Pod.
+hostPath -- File or directory from the host node’s filesystem into your Pod.
+configMap, secret -- Provides a way to inject configuration data and secrets into Pods.
+nfs      -- An existing NFS (Network File System) share to be mounted into your Pod. Preserves data after Pod restart.
+Cloud provider solutions -- Provider-specific implementation for AWS, GCE or Azure
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+ 	name: my-container
+spec:
+ 	volumes:
+ 	- name: logs-volume
+ 		emptyDir: {}
+ containers:
+ 	- image: nginx
+ 		name: my-container
+ 		volumeMounts:
+ 		- mountPath: /var/logs
+ 			name: logs-volume
+```
+
+Creating volume
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+ 	name: my-container
+spec:
+ 	volumes:
+ 	- name: logs-volume
+ 		emptyDir: {}
+ 	containers:
+ 	- image: nginx
+ 		name: my-container
+ 		volumeMounts:
+ 		- mountPath: /var/logs
+ 			name: logs-volume
+```
+
+Creating a persistent volume
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ 	name: pv
+spec:
+ 	capacity:
+ 		storage: 512m
+ 	accessModes:  			-- how many nodes can access volumes
+ 		- ReadWriteOnce
+ 	storageClassName: shared
+ 	hostPath:
+ 		path: /data/config
+```
+
+Creating a claim
+```yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+ 	name: pvc
+spec:
+ 	accessModes:
+ 		- ReadWriteMany
+ 	resources:
+ 		requests:
+ 			storage: 256m
+ 	storageClassName: shared
+ ```
+
+ Mounting a claim
+ ```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+ 	creationTimestamp: null
+ 	name: app
+spec:
+ 	volumes:
+ 	- name: configpvc
+ 		persistentVolumeClaim:
+ 			claimName: pvc
+ 	containers:
+ 	- image: nginx
+ 		name: app
+ 		volumeMounts:
+ 			- mountPath: "/data/app/config"
+ 				name: configpvc
+ ```
 
 
