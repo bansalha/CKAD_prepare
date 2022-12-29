@@ -26,6 +26,22 @@ persistentvolume=pv
 Delete any K8s object `kubectl delete pod nginx --grace-period=0 --force`
 
 to schedule the pod on specific node called production node `kubectl taint nodes production-node app=red:NoSchedule`
+Pod should have node selector
+```
+spec:
+  ......
+  nodeSelector:
+    size: medium
+    .....
+```
+Use node affinity which is more flexible and powerful. One can define node affinity in pod which matches a specific label.
+
+to repel any pod with specific label, use taint
+`kubectl taint nodes minikube02 size=large:NoSchedule`
+
+
+
+Add Labels to node `kubectl label nodes minikube size=medium`
 
 Frequently used commands
 set default namespace `kubectl config set-context --current --namespace=ckad-prep`
@@ -85,12 +101,18 @@ to remove all labels `kubectl label pod backend env-`
 
 change a label `kubectl label po nginx2 app=v2 --overwrite`
 
+Create pod with label `kubectl run frontend --image=nginx --restart=Never --labels=env=prod,team=shiny`
+
 Add a new label to pod having app=v1 or v2 `kubectl label pod -l 'app in (v1,v2) tier=web`
 
 remove label from pod having app as label `kubectl label po -l app app-`
 
 Run a pod specifically on a node
 `kubectl label nodes node1 accelerator=nvidia-tesla-p100`
+
+Get CPU/memory utilization for nodes 
+`kubectl top nodes`
+
 Use Nodeselector property to set node affinity
 ```yaml
 apiVersion: v1
@@ -221,6 +243,12 @@ create deployment `kubectl create deployment myapp --image=nginx --port=80`
 
 `kubectl create deployment my-deploy --image=nginx --replicas=3 --dry-run=client -o yaml> deploy.yaml`
 
+expose a service of a deployment
+`kubectl expose deploy foo --port=6262 --target-port=8080`
+
+Autoscale deployment
+`kubectl autoscale deploy my-deploy --cpu-percent=70 --min=1 --max=10`
+
 ``` yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -286,6 +314,9 @@ pod creation and running a command `kubectl run tmp --image=busybox --restart=Ne
 kubectl describe pods | grep -C 10 "author=John Doe"
 
 Run a pod `kubectl run nginx --image=nginx --dry-run=client -o yaml > ngix-pod.yaml`
+
+run a pod with label
+`kubectl run busybox --image=busybox --rm -it --restart=Never --labels=access=granted`
 
 ```yaml
 Configuring Env Variables
@@ -392,6 +423,68 @@ rollback to older version `kubectl rollout undo deployment/deploy --to-revision=
 # Cronjob
 cronjob creation `kubectl create cronjob current-date --schedule="* * * * *" --image=nginx -- /bin/sh -c 'echo "Current date: $(date)"'`
 
+
+ Create a job and run a command`kubectl create job pi --image=perl:5.34 -- perl -Mbignum=bpi -wle 'print bpi(2000)'`
+
+ kill the job if it runs more than 30sec to start execution after its scheduled time
+ ```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  creationTimestamp: null
+  labels:
+    run: busybox
+  name: busybox
+spec:
+  startingDeadlineSeconds: 30 # add this line to kill the job after 30sec
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        run: busybox
+        .....
+ ```
+
+kill the job if it start but takes more than 12 sec to complete execution
+```yaml
+......
+spec:
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+      name: time-limited-job
+    spec:
+      activeDeadlineSeconds: 12 # add this line
+      template:
+......      	
+```
+
+Run 5 instance of jobs
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  creationTimestamp: null
+  labels:
+    run: busybox
+  name: busybox
+spec:
+  completions: 5 # this will run 5 instances of job
+  template:
+  .............
+
+```
+
+run 5 instances of job in parallel
+```yaml
+....
+spec:
+  parallelism: 5 # run the job in parallel
+  template:
+    metadata:
+....    	
+```
+
 ```yaml
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -413,10 +506,15 @@ spec:
  							name: counter
 ``` 							
 
+create job form cronjob `kubectl create job cronjob --from=cronjob/busybox`
+
 # Service 
 create service with cluster ip `kubectl create service clusterip myapp --tcp=80:80`
 
 create a pod ad expose with a service `kubectl run nginx --image=nginx --port=80 --expose`
+
+get Ip of service
+`kubectl get svc nginx1 --template={{.spec.clusterIP}}`
 
 ```yaml
 apiVersion: v1
@@ -524,6 +622,10 @@ Literal values `kubectl create configmap db-config --from-literal=db=staging`
 Single file with environment variables `kubectl create configmap db-config --from-env-file=config.env`
 File or directory `kubectl create configmap db-config --from-file=config.txt`
 
+Create cm from file with key special ` kubectl create cm configmap4 --from-file=special=config4.txt`
+
+
+
 ```
 yaml
 Creating ConfigMaps (declarative)
@@ -620,6 +722,9 @@ spec:
  		periodSeconds: 2
 ```
 
+list all pods in all namespaces with liveness probe which are failed in format of <namespace>/<pod-name>
+`kubectl get events -o json | jq -r '.items[] | select(.message | contains("failed liveness probe")).involvedObject | .namespace + "/" + .name'`
+
 Defining a Liveness Probe
 ```yaml
 apiVersion: v1
@@ -679,6 +784,29 @@ spec:
  		pods: "2"
  		requests.cpu: "2"
  		requests.memory: 500m
+```
+Create the YAML for an nginx pod that has the capabilities "NET_ADMIN", "SYS_TIME" added to its single container
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    imagePullPolicy: IfNotPresent
+    name: nginx
+    securityContext: # insert this line
+      capabilities: # and this
+        add: ["NET_ADMIN", "SYS_TIME"] # this is where security capabilites are added
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
 ```
 
 Defining Container Constraints
@@ -893,5 +1021,16 @@ spec:
  			- mountPath: "/data/app/config"
  				name: configpvc
  ```
+
+# Other Commands
+Get value from secret
+`kubectl get secret mysecret -o jsonpath={'.data.username'}`
+`kubectl get secret mysecret -yaml | grep username`
+`kubectl get secret mysecret2 --template '{{.data.username}}'`
+
+Get all the attributes in yaml
+`kubectl explain pods.spec`
+
+
 
 

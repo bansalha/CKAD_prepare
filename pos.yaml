@@ -3,24 +3,21 @@ kind: Pod
 metadata:
   creationTimestamp: null
   labels:
-    run: busybox
-  name: busyboxnew
+    run: app
+  name: app
+  namespace: app-stack
 spec:
   containers:
-  - args:
-    - /bin/sh
-    - -c
-    - sleep 3600
-    image: busybox
-    name: busybox
+  - image: nginx
+    name: app
     resources: {}
     volumeMounts:
-    - mountPath: /etc/foo
-      name: mypvc
+      - mountPath: /var/app/config
+        name: pvcclaim
   volumes:
-    - name: mypvc
+    - name: pvcclaim
       persistentVolumeClaim:
-        claimName: myclaim
+        claimName: task-pv-claim 
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 status: {}

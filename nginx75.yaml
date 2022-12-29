@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx1
+  name: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nginx
+        version: v1
+    spec:
+      initContainers:
+      - image: busybox
+        name: busybox
+        command:
+        - /bin/sh
+        - -c
+        - "echo version1 > /work-dir/index.html"
+        volumeMounts:
+        - name: workdir
+          mountPath: "/work-dir"
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: workdir
+          mountPath: "/work-dir"
+      volumes:
+      - name: workdir
+        emptyDir: {}
+status: {}

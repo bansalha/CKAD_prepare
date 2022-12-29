@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv
+  name: pv0003
 spec:
   capacity:
-    storage: 512m
+    storage: 10Gi
   volumeMode: Filesystem
   accessModes:
+    - ReadWriteOnce
     - ReadWriteMany
-  persistentVolumeReclaimPolicy: Recycle
-  storageClassName: shared
+  storageClassName: normal
   hostPath:
-    path: "/data/config"
+    path: /etc/foo

@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: busybox
+  name: busybox
+spec:
+  containers:
+  - image: busybox
+    name: busybox
+    args: 
+    - /bin/sh 
+    - -c 
+    - sleep 3600
+    volumeMounts:
+    - mountPath: /etc/foo
+      name: test-volume
+  - image: busybox
+    name: busybox2
+    args:
+    - /bin/sh 
+    - -c 
+    - sleep 3600
+    volumeMounts:
+    - mountPath: /etc/foo
+      name: test-volume
+  volumes:
+  - name: test-volume
+    emptyDir: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
