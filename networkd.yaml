@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wildcard-host
+spec:
+  rules:
+  - host: "ckad-mock-exam-solution.com"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/video"
+        backend:
+          service:
+            name: deploy
+            port:
+              number: 80

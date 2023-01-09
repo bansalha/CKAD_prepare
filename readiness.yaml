@@ -3,26 +3,18 @@ kind: Pod
 metadata:
   creationTimestamp: null
   labels:
-    run: hello
-  name: hello
+    run: busybox
+  name: busybox
 spec:
   containers:
-  - image: bmuschko/nodejs-hello-world:1.0.0
-    name: hello
-    ports:
-    - containerPort: 3000
-      name: nodejs-port
+  - image: busybox
+    name: busybox
     readinessProbe:
       httpGet:
-        port: nodejs-port
-        path: /
-      initialDelaySeconds: 2
-    livenessProbe:
+        path: /ready
+        port: 8080
       initialDelaySeconds: 5
-      periodSeconds: 8
-      httpGet:
-        path: /
-        port: nodejs-port
+      periodSeconds: 5
     resources: {}
   dnsPolicy: ClusterFirst
   restartPolicy: Always

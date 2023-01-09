@@ -1,21 +1,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  creationTimestamp: null
-  name: busybox
+  name: whalesay
 spec:
-  completions: 5
   template:
-    metadata:
-      creationTimestamp: null
     spec:
       containers:
-      - command:
-        - /bin/sh
-        - -c
-        - echo Hi
-        image: busybox
-        name: busybox
-        resources: {}
+      - name: whalesay
+        image: docker/whalesay
+        command: ["cowsay I am going to acc CKAD!"]
       restartPolicy: Never
-status: {}
+  backoffLimit: 4
+  completions: 10 

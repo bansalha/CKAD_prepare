@@ -36,6 +36,15 @@ spec:
 ```
 Use node affinity which is more flexible and powerful. One can define node affinity in pod which matches a specific label.
 
+Toleration for a pod to run on a node
+```yaml
+tolerations:
+- key: "key1"
+  operator: "Equal"
+  value: "value1"
+  effect: "NoSchedule"
+```
+
 to repel any pod with specific label, use taint
 `kubectl taint nodes minikube02 size=large:NoSchedule`
 
